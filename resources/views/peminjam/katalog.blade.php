@@ -32,6 +32,30 @@
         </p>
     </div>
 
+    <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <form method="GET" action="{{ route('peminjam.katalog') }}" class="flex flex-col md:flex-row md:items-center gap-3">
+            <div class="flex-1">
+                <label for="search" class="sr-only">Cari alat</label>
+                <input
+                    id="search"
+                    type="text"
+                    name="search"
+                    value="{{ $search ?? '' }}"
+                    placeholder="Cari nama alat atau kategori..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+            </div>
+            <button type="submit" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                Cari
+            </button>
+            @if($search)
+                <a href="{{ route('peminjam.katalog') }}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Reset
+                </a>
+            @endif
+        </form>
+    </div>
+
 
     <form action="{{ route('peminjam.peminjaman.ajukan') }}"
           method="POST">

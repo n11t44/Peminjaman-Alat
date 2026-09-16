@@ -168,7 +168,7 @@
                                 {{-- Alat --}}
                                 <td class="py-3 px-4 border-b">
 
-                                    @forelse($peminjaman->detailPinjams as $detail)
+                                    @forelse($peminjaman->detailPinjam as $detail)
 
                                         <div class="font-medium text-gray-900">
                                             {{ $detail->alat->nama_alat ?? '-' }}
