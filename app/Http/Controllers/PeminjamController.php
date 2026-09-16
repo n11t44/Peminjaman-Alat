@@ -10,11 +10,54 @@ use Illuminate\Support\Facades\DB;
 
 class PeminjamController extends Controller
 {
-    
-    public function katalogAlat()
+    public function dashboard()
     {
-        $alats = Alat::with('kategori')->where('stok', '>', 0)->get();
-        return view('peminjam.katalog', compact('alats'));
+        $peminjamans = Peminjaman::with('detailPinjam.alat')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
+
+        $totalPeminjaman = $peminjamans->count();
+        $menunggu = $peminjamans->where('status', 'diajukan')->count();
+        $sedangDipinjam = $peminjamans->whereIn('status', ['dipinjam', 'telat'])->count();
+        $selesai = $peminjamans->whereIn('status', ['dikembalikan', 'selesai'])->count();
+
+        $peminjamansTerbaru = $peminjamans->take(5);
+        $alatsTersedia = Alat::with('kategori')
+            ->where('stok', '>', 0)
+            ->latest()
+            ->take(6)
+            ->get();
+
+        return view('peminjam.dashboard', compact(
+            'totalPeminjaman',
+            'menunggu',
+            'sedangDipinjam',
+            'selesai',
+            'peminjamansTerbaru',
+            'alatsTersedia',
+            'peminjamans'
+        ));
+    }
+
+    public function katalogAlat(Request $request)
+    {
+        $search = $request->input('search');
+
+        $alats = Alat::with('kategori')
+            ->where('stok', '>', 0)
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_alat', 'like', "%{$search}%")
+                        ->orWhereHas('kategori', function ($k) use ($search) {
+                            $k->where('nama_kategori', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest()
+            ->get();
+
+        return view('peminjam.katalog', compact('alats', 'search'));
     }
 
     public function ajukanPeminjaman(Request $request)
@@ -59,13 +102,24 @@ class PeminjamController extends Controller
     }
 
     
-    public function riwayatPeminjaman()
+    public function riwayatPeminjaman(Request $request)
     {
+        $search = $request->input('search');
+
         $peminjamans = Peminjaman::with('detailPinjam.alat.kategori')
             ->where('user_id', auth()->id())
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('status', 'like', "%{$search}%")
+                        ->orWhere('tgl_pinjam', 'like', "%{$search}%")
+                        ->orWhereHas('detailPinjam.alat', function ($a) use ($search) {
+                            $a->where('nama_alat', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest()
             ->get();
 
-        return view('peminjam.riwayat', compact('peminjamans'));
+        return view('peminjam.riwayat', compact('peminjamans', 'search'));
     }
 }
